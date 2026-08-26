@@ -1,0 +1,24 @@
+[project]
+name = "job-resume-matcher"
+version = "0.1.0"
+description = "AI-powered job and resume matching system"
+readme = "README.md"
+authors = [
+    { name = "Deepaksingh0907", email = "dnegi281@gmail.com" }
+]
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi>=0.141.1",
+    "psycopg[binary]>=3.3.4",
+    "pydantic-settings>=2.15.0",
+    "pymupdf>=1.28.2",
+    "python-multipart>=0.0.32",
+    "scikit-learn>=1.9.0",
+    "sentence-transformers>=6.0.0",
+    "sqlalchemy>=2.0.52",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[tool.uv]
+package = false
