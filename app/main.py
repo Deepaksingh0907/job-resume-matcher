@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.match_routes import router as match_router
 from app.api.resume_routes import router as resume_router
+from app.api.auth_routes import router as auth_router
 
 
 app = FastAPI(
@@ -11,8 +12,9 @@ app = FastAPI(
 )
 
 
-app.include_router(resume_router)
+app.include_router(auth_router)
 app.include_router(match_router)
+app.include_router(resume_router)
 
 
 @app.get("/")

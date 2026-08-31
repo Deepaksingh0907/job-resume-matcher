@@ -1,9 +1,12 @@
 from fastapi import APIRouter
+from fastapi import Depends
 from fastapi import File
 from fastapi import Form
 from fastapi import HTTPException
 from fastapi import UploadFile
 
+from app.api.dependencies import get_current_user
+from app.models import User
 from app.schemas.analysis_schema import AnalysisResponse
 from app.services.matching_service import calculate_similarity
 from app.services.pdf_service import PDFExtractionError
@@ -28,7 +31,8 @@ router = APIRouter(
 )
 async def analyze_resume(
     file: UploadFile = File(...),
-    job_description: str = Form(...)
+    job_description: str = Form(...),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         extracted_text = await extract_text_from_pdf(file)
