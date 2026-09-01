@@ -17,3 +17,9 @@ class AnalysisHistoryResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class AnalysisHistoryListResponse(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    items: list[AnalysisHistoryResponse]
