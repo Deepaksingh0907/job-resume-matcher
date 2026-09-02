@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Login | AI Job Resume Matcher
+{% endblock %}
+
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+
+{% block content %}
+
+<main class="auth-page">
+
+    <section class="card auth-card">
+
+        <p class="eyebrow">
+            AI Job Resume Matcher
+        </p>
+
+        <h1>
+            Welcome back
+        </h1>
+
+        <p>
+            Login to analyze your resume against a job description.
+        </p>
+
+
+        <form id="loginForm">
+
+            <label for="loginEmail">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="loginEmail"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+            >
+
+
+            <label for="loginPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+
+            <button
+                type="submit"
+                id="loginButton"
+                class="primary-button"
+            >
+                Login
+            </button>
+
+            <p
+                id="loginMessage"
+                class="form-message"
+                aria-live="polite"
+            ></p>
+
+        </form>
+
+
+        <p class="auth-link">
+            Do not have an account?
+            <a href="/register">
+                Create an account
+            </a>
+        </p>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="/static/js/auth.js"></script>
+{% endblock %}

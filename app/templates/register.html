@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Create Account | AI Job Resume Matcher
+{% endblock %}
+
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+
+{% block content %}
+
+<main class="auth-page">
+
+    <section class="card auth-card">
+
+        <p class="eyebrow">
+            AI Job Resume Matcher
+        </p>
+
+        <h1>
+            Create your account
+        </h1>
+
+        <p class="auth-description">
+            Start analyzing your resume against job descriptions.
+        </p>
+
+
+        <form id="registerForm">
+
+            <label for="registerEmail">
+                Email address
+            </label>
+
+            <input
+                type="email"
+                id="registerEmail"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+            >
+
+
+            <label for="registerPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="registerPassword"
+                name="password"
+                placeholder="Create a password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+            >
+
+            <p class="password-hint">
+                Password must contain at least 8 characters.
+            </p>
+
+
+            <button
+                type="submit"
+                id="registerButton"
+                class="primary-button"
+            >
+                Create account
+            </button>
+
+            <p
+                id="registerMessage"
+                class="form-message"
+                aria-live="polite"
+            ></p>
+
+        </form>
+
+
+        <p class="auth-link">
+            Already have an account?
+            <a href="/">
+                Login here
+            </a>
+        </p>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="/static/js/auth.js"></script>
+{% endblock %}

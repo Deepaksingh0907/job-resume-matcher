@@ -56,7 +56,7 @@ def get_analysis_history(
     analyses = db.scalars(query).all()
 
     return {
-        "total": total or 0,
+        "total": total or 0, 
         "skip": skip,
         "limit": limit,
         "items": analyses
