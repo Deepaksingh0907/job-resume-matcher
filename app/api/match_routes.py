@@ -1,16 +1,21 @@
+import logging
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import File
 from fastapi import Form
 from fastapi import HTTPException
 from fastapi import UploadFile
+
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.database import get_db
-from app.models import User
 from app.models import Analysis
+from app.models import User
 from app.schemas.analysis_schema import AnalysisResponse
+from app.services.llm_service import LLMServiceError
+from app.services.llm_service import generate_match_insights
 from app.services.matching_service import calculate_similarity
 from app.services.pdf_service import PDFExtractionError
 from app.services.pdf_service import extract_text_from_pdf
@@ -20,6 +25,9 @@ from app.services.semantic_matching_service import (
     calculate_semantic_similarity
 )
 from app.services.skill_matching_service import compare_skills
+
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -47,11 +55,13 @@ async def analyze_resume(
             detail=str(error)
         ) from error
 
+
     cleaned_resume = clean_text(extracted_text)
 
     cleaned_job_description = clean_text(
         job_description
     )
+
 
     tfidf_score = calculate_similarity(
         cleaned_resume,
@@ -74,12 +84,32 @@ async def analyze_resume(
         skill_analysis["skill_score"]
     )
 
+
+    llm_insights = None
+
+    try:
+        llm_insights = await generate_match_insights(
+            resume_text=cleaned_resume,
+            job_description=cleaned_job_description,
+            overall_score=overall_score,
+            tfidf_score=tfidf_score,
+            semantic_score=semantic_score,
+            skill_analysis=skill_analysis
+        )
+
+    except LLMServiceError as error:
+        logger.warning(
+            "LLM insights could not be generated: %s",
+            error
+        )
+
+
     analysis = Analysis(
         user_id=current_user.id,
-        resume_filename=file.filename or "unknown.pdf",
+        resume_filename=file.filename,
         extracted_text=extracted_text,
         cleaned_resume=cleaned_resume,
-        job_description=job_description,
+        job_description=cleaned_job_description,
         tfidf_score=tfidf_score,
         semantic_score=semantic_score,
         skill_score=skill_analysis["skill_score"],
@@ -94,6 +124,7 @@ async def analyze_resume(
     db.commit()
     db.refresh(analysis)
 
+
     return {
         "filename": file.filename,
         "extracted_text": extracted_text,
@@ -102,5 +133,6 @@ async def analyze_resume(
         "tfidf_score": tfidf_score,
         "semantic_score": semantic_score,
         "skill_analysis": skill_analysis,
-        "overall_score": overall_score
+        "overall_score": overall_score,
+        "llm_insights": llm_insights
     }
