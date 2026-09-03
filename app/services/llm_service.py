@@ -4,6 +4,10 @@ from json import JSONDecodeError
 import httpx
 
 from app.core.config import settings
+from app.services.chunking_service import create_chunks
+from app.services.retrieval_service import (
+    retrieve_relevant_chunks
+)
 
 
 class LLMServiceError(Exception):
@@ -23,7 +27,7 @@ def _parse_llm_response(content: str) -> dict:
 
     except JSONDecodeError as error:
         raise LLMServiceError(
-            "The LLM returned an invalid JSON response."
+            "The LLM returned invalid JSON."
         ) from error
 
     return {
@@ -33,7 +37,10 @@ def _parse_llm_response(content: str) -> dict:
                 "No summary was generated."
             )
         ),
-        "strengths": result.get("strengths", []),
+        "strengths": result.get(
+            "strengths",
+            []
+        ),
         "recommendations": result.get(
             "recommendations",
             []
@@ -58,13 +65,54 @@ async def generate_match_insights(
             "OPENROUTER_API_KEY is not configured."
         )
 
+    try:
+        resume_chunks = create_chunks(
+            resume_text
+        )
+
+        job_chunks = create_chunks(
+            job_description
+        )
+
+        retrieval_query = (
+            "What resume experience, projects, and skills "
+            "are most relevant to the job requirements?"
+        )
+
+        relevant_resume_chunks = retrieve_relevant_chunks(
+            query=retrieval_query,
+            chunks=resume_chunks,
+            top_k=4
+        )
+
+        relevant_job_chunks = retrieve_relevant_chunks(
+            query=retrieval_query,
+            chunks=job_chunks,
+            top_k=4
+        )
+
+    except Exception as error:
+        raise LLMServiceError(
+            "RAG retrieval failed."
+        ) from error
+
+
+    resume_context = "\n\n".join(
+        relevant_resume_chunks
+    )
+
+    job_context = "\n\n".join(
+        relevant_job_chunks
+    )
+
+
     prompt = f"""
 You are a professional resume-analysis assistant.
 
 Analyze the resume against the job description.
 
-Do not invent experience, skills, or qualifications.
-Use only the information provided.
+Use only the retrieved context below.
+Do not invent skills, experience, or qualifications.
 
 Return valid JSON only in this format:
 
@@ -84,11 +132,11 @@ Return valid JSON only in this format:
     ]
 }}
 
-Resume:
-{resume_text[:12000]}
+Retrieved Resume Context:
+{resume_context}
 
-Job Description:
-{job_description[:12000]}
+Retrieved Job Description Context:
+{job_context}
 
 Existing Scores:
 Overall score: {overall_score}
@@ -96,8 +144,9 @@ TF-IDF score: {tfidf_score}
 Semantic score: {semantic_score}
 
 Skill Analysis:
-{json.dumps(skill_analysis)}
+{json.dumps(skill_analysis, indent=2)}
 """
+
 
     payload = {
         "model": settings.llm_model,
@@ -106,7 +155,7 @@ Skill Analysis:
                 "role": "system",
                 "content": (
                     "You analyze resumes accurately "
-                    "and return structured JSON."
+                    "using retrieved evidence and return JSON."
                 )
             },
             {
@@ -117,6 +166,7 @@ Skill Analysis:
         "temperature": 0.2
     }
 
+
     headers = {
         "Authorization": (
             f"Bearer {settings.openrouter_api_key}"
@@ -124,10 +174,12 @@ Skill Analysis:
         "Content-Type": "application/json"
     }
 
+
     endpoint = (
         f"{settings.openrouter_base_url.rstrip('/')}"
         "/chat/completions"
     )
+
 
     try:
         async with httpx.AsyncClient(
@@ -143,7 +195,9 @@ Skill Analysis:
 
         response_data = response.json()
 
-        content = response_data["choices"][0]["message"]["content"]
+        content = response_data[
+            "choices"
+        ][0]["message"]["content"]
 
         return _parse_llm_response(content)
 
