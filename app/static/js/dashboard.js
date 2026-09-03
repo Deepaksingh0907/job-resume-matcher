@@ -57,6 +57,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    function renderList(items) {
+        if (!items || items.length === 0) {
+            return "<li>No information available.</li>";
+        }
+
+        return items
+            .map(
+                (item) => `
+                    <li>${escapeHtml(item)}</li>
+                `
+            )
+            .join("");
+    }
+
+
+    function renderLLMInsights(insights) {
+        if (!insights) {
+            return `
+                <div class="llm-insights">
+                    <h3>AI insights</h3>
+
+                    <p class="empty-message">
+                        AI insights are not available for this analysis.
+                    </p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="llm-insights">
+
+                <h3>AI insights</h3>
+
+                <p class="llm-summary">
+                    ${escapeHtml(insights.summary)}
+                </p>
+
+
+                <div class="insight-group">
+                    <h4>Strengths</h4>
+
+                    <ul class="insight-list">
+                        ${renderList(insights.strengths)}
+                    </ul>
+                </div>
+
+
+                <div class="insight-group">
+                    <h4>Recommendations</h4>
+
+                    <ul class="insight-list">
+                        ${renderList(insights.recommendations)}
+                    </ul>
+                </div>
+
+
+                <div class="insight-group">
+                    <h4>Interview questions</h4>
+
+                    <ul class="insight-list">
+                        ${renderList(insights.interview_questions)}
+                    </ul>
+                </div>
+
+            </div>
+        `;
+    }
+
+
     function renderAnalysis(data) {
         const skills = data.skill_analysis || {};
 
@@ -93,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             </div>
 
+
             <div class="skills-section">
                 <h3>Matched skills</h3>
 
@@ -104,6 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
+
             <div class="skills-section">
                 <h3>Missing skills</h3>
 
@@ -114,6 +185,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     )}
                 </div>
             </div>
+
+
+            ${renderLLMInsights(data.llm_insights)}
         `;
     }
 
@@ -204,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(
                 (item) => `
                     <div class="history-item">
+
                         <h3>
                             ${escapeHtml(item.resume_filename)}
                         </h3>
@@ -225,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 item.created_at
                             ).toLocaleString()}
                         </p>
+
                     </div>
                 `
             )

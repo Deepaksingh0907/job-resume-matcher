@@ -98,9 +98,10 @@ async def analyze_resume(
         )
 
     except LLMServiceError as error:
-        logger.warning(
+        logger.exception(
             "LLM insights could not be generated: %s",
-            error
+            error,
+            exc_info=error
         )
 
 
