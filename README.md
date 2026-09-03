@@ -2,7 +2,7 @@
 
 An AI-powered FastAPI application that compares a resume with a job description and explains how well they match.
 
-The application combines traditional NLP, machine learning, semantic embeddings, skill matching, PostgreSQL, JWT authentication, and an optional OpenRouter LLM explanation layer.
+The application combines traditional NLP, machine learning, semantic embeddings, skill matching, PostgreSQL, JWT authentication, RAG retrieval, and an optional OpenRouter LLM explanation layer.
 
 ## Features
 
@@ -13,10 +13,11 @@ The application combines traditional NLP, machine learning, semantic embeddings,
 - Extract resume and job skills using keyword aliases and regular expressions.
 - Show matched and missing skills.
 - Calculate a weighted overall match score.
-- Generate AI-based strengths, recommendations, and interview questions.
+- Generate AI-based strengths, recommendations, and interview questions using LLM insights.
+- RAG retrieval system for enhanced resume insights.
 - Register and authenticate users with JWT.
 - Store analysis results in PostgreSQL.
-- View analysis history for the authenticated user.
+- View analysis history with pagination for the authenticated user.
 - Simple Jinja2, CSS, and vanilla JavaScript frontend.
 - Interactive API documentation through Swagger UI.
 
@@ -46,6 +47,9 @@ Resume PDF + Job Description
     Weighted overall score
             |
             v
+     RAG retrieval system
+            |
+            v
      Optional LLM insights
 ```
 
@@ -57,7 +61,7 @@ Overall score = (TF-IDF score × 0.20)
               + (Skill score × 0.40)
 ```
 
-The numerical score is calculated by Python. The LLM is used to explain the result and provide recommendations.
+The numerical score is calculated by Python. The LLM is used to explain the result and provide recommendations, enhanced by RAG retrieval for contextual insights.
 
 ## Technology stack
 
@@ -71,6 +75,7 @@ The numerical score is calculated by Python. The LLM is used to explain the resu
 - JWT with PyJWT
 - Password hashing with pwdlib and Argon2
 - OpenRouter-compatible LLM API
+- RAG retrieval system
 - Jinja2
 - HTML, CSS, and vanilla JavaScript
 - uv for dependency management
@@ -120,7 +125,8 @@ app/
 │   ├── scoring_service.py
 │   ├── semantic_matching_service.py
 │   ├── skill_matching_service.py
-│   └── skill_service.py
+│   ├── skill_service.py
+│   └── rag_service.py
 │
 ├── static/
 │   ├── css/
@@ -262,7 +268,7 @@ The login endpoint uses OAuth2 form fields:
 | Method | Path | Authentication | Purpose |
 |--------|------|-----------------|---------|
 | POST | /api/v1/resumes/extract-text | Not required | Extract text from a PDF |
-| POST | /api/v1/matches/analyze | Bearer token | Analyze a resume against a job description |
+| POST | /api/v1/matches/analyze | Bearer token | Analyze a resume against a job description with RAG-enhanced insights |
 
 The matching request uses multipart form data:
 - `file` = resume PDF
@@ -272,7 +278,7 @@ The matching request uses multipart form data:
 
 | Method | Path | Authentication | Purpose |
 |--------|------|-----------------|---------|
-| GET | /api/v1/analyses/history | Bearer token | List the current user's analyses |
+| GET | /api/v1/analyses/history | Bearer token | List the current user's analyses with pagination |
 | GET | /api/v1/analyses/{analysis_id} | Bearer token | View one analysis |
 
 Example:
@@ -287,7 +293,7 @@ Register → Login → Receive JWT → Send Bearer token → Use protected APIs
 
 Each analysis is associated with the authenticated user's ID. History and detail queries are filtered by that user ID.
 
-## LLM behavior
+## LLM and RAG behavior
 
 The LLM receives:
 
@@ -296,6 +302,7 @@ The LLM receives:
 - TF-IDF score
 - Semantic score
 - Skill analysis
+- RAG-retrieved contextual insights
 
 It returns:
 
@@ -304,11 +311,22 @@ It returns:
 - Recommendations
 - Interview questions
 
+The RAG retrieval system enhances insights by retrieving relevant context from the analysis history and job/skill database.
+
 The LLM integration is fail-safe. If the API key is missing, the model is invalid, or the request fails, the core ML scores are still returned.
+
+## Recent enhancements
+
+- **RAG Retrieval System**: Added retrieval-augmented generation for more contextual and accurate insights
+- **LLM Integration**: Seamless integration of LLM insights into the resume matching pipeline
+- **Frontend UI**: Complete HTML/CSS/JavaScript interface with authentication and dashboard
+- **Pagination Support**: Analysis history endpoint now supports skip/limit pagination
+- **JWT Authentication**: Robust OAuth2-based user authentication system
+- **Analysis History**: Track and retrieve past resume-job matching analyses
 
 ## Limitations and future improvements
 
-- LLM insights are currently returned in the analysis response but are not stored in the `analyses` table.
+- LLM insights and RAG context are currently returned in the analysis response but are not stored in the `analyses` table.
 - `Base.metadata.create_all()` is used for initial table creation; Alembic migrations should be added for production.
 - The frontend stores the JWT in browser storage for learning purposes. Production systems should consider secure HttpOnly cookies.
 - The first Sentence Transformer request may download the model and take longer.
